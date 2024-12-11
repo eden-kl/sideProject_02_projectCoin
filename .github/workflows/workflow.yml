@@ -186,9 +186,9 @@ jobs:
             php artisan route:cache
             php artisan config:cache
             echo 'generate key'
-            php artisan key:generate
+            php artisan key:generate --force
             echo 'migrate database'
-            php artisan migrate
+            php artisan migrate --force
 
       - name: aws 移除 ip 白名單
         run: |
