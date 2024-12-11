@@ -187,8 +187,6 @@ jobs:
             echo 'clear route and config'
             php artisan route:clear
             php artisan config:clear
-            echo '類映射優化'
-            php artisan optimize
 
       - name: aws 移除 ip 白名單
         run: |
