@@ -180,8 +180,6 @@ jobs:
             VITE_APP_NAME="${APP_NAME}"
             # end of envfile
             EOF
-            echo 'generate key'
-            php artisan key:generate --force
             echo 'migrate database'
             php artisan migrate --force
             echo 'clear route and config'
