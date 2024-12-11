@@ -132,24 +132,13 @@ jobs:
         env:
           PROJECT_NAME: projectCoin
           APP_NAME: ${{ secrets.APP_NAME }}
-          APP_ENV: production
           APP_KEY: ${{ secrets.APP_KEY }}
-          APP_DEBUG: false
-          APP_TIMEZONE: Asia/Taipei
           APP_URL: ${{ secrets.APP_URL }}
           APP_AES_KEY: ${{ secrets.APP_AES_KEY }}
-          DB_CONNECTION: pgsql
           DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: 5432
           DB_DATABASE: ${{ secrets.DB_DATABASE }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          SESSION_DRIVER: database
-          SESSION_LIFETIME: 120
-          SESSION_ENCRYPT: false
-          SESSION_PATH: /
-          SESSION_DOMAIN: "null"
-          VITE_APP_NAME: "${APP_NAME}"
         with:
           host: ${{ secrets.SSH_HOST }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -171,24 +160,24 @@ jobs:
             cat <<EOF > ~/docker/html/$PROJECT_NAME/.env
             # start of envfile
             APP_NAME=$APP_NAME
-            APP_ENV=$APP_ENV
+            APP_ENV=production
             APP_KEY=$APP_KEY
-            APP_DEBUG=$APP_DEBUG
-            APP_TIMEZONE=$APP_TIMEZONE
+            APP_DEBUG=false
+            APP_TIMEZONE=Asia/Taipei
             APP_URL=$APP_URL
             APP_AES_KEY=$APP_AES_KEY
-            DB_CONNECTION=$DB_CONNECTION
+            DB_CONNECTION=pgsql
             DB_HOST=$DB_HOST
-            DB_PORT=$DB_PORT
+            DB_PORT=5432
             DB_DATABASE=$DB_DATABASE
             DB_USERNAME=$DB_USERNAME
             DB_PASSWORD=$DB_PASSWORD
-            SESSION_DRIVER=$SESSION_DRIVER
-            SESSION_LIFETIME=$SESSION_LIFETIME
-            SESSION_ENCRYPT=$SESSION_ENCRYPT
-            SESSION_PATH=$SESSION_PATH
-            SESSION_DOMAIN=$SESSION_DOMAIN
-            VITE_APP_NAME=$VITE_APP_NAME
+            SESSION_DRIVER=database
+            SESSION_LIFETIME=120
+            SESSION_ENCRYPT=false
+            SESSION_PATH=/
+            SESSION_DOMAIN=null
+            VITE_APP_NAME="${APP_NAME}"
             # end of envfile
             EOF
             echo 'generate key'
