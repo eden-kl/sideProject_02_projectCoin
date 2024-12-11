@@ -1,0 +1,161 @@
+name: CI/CD
+
+on:
+  workflow_dispatch:
+  push:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  ci-test:
+
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: mbstring, intl
+        coverage: xdebug
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate --strict
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+
+    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
+    # Docs: https://getcomposer.org/doc/articles/scripts.md
+
+    - name: Run test suite
+      run: php vendor/bin/phpunit --coverage-text
+
+  cd-deploy:
+    needs: [ ci-test ]
+    runs-on: ubuntu-24.04
+    environment: production
+    env:
+      AWS_INSTANCE_SG_ID: ${{secrets.SECURITY_GROUP_ID}}
+
+    if: github.ref_name == 'main'
+
+    steps:
+      - run: echo "tests workflow is successful"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 設定AWS證書
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{secrets.AWS_ROLE}}
+          aws-region: ap-northeast-1
+
+      - name: 取得目前 github public ip address
+        id: ip
+        uses: haythem/public-ip@v1.3
+
+      - name: aws 建立 ip 白名單
+        run: |
+          aws ec2 authorize-security-group-ingress \
+            --group-id $AWS_INSTANCE_SG_ID \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+      # 使用 appleboy/ssh-action@master 這個 action 遠端連線至正式環境
+      # https://github.com/appleboy/ssh-action
+      - name: Deployment
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          PROJECT_NAME: projectCoin
+          APP_NAME: ${{ secrets.APP_NAME }}
+          APP_ENV: production
+          APP_KEY: ${{ secrets.APP_KEY }}
+          APP_DEBUG: false
+          APP_TIMEZONE: Asia/Taipei
+          APP_URL: ${{ secrets.APP_URL }}
+          APP_AES_KEY: ${{ secrets.APP_AES_KEY }}
+          DB_CONNECTION: pgsql
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: 5432
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          SESSION_DRIVER: database
+          SESSION_LIFETIME: 120
+          SESSION_ENCRYPT: false
+          SESSION_PATH: /
+          SESSION_DOMAIN: "null"
+          VITE_APP_NAME: "${APP_NAME}"
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          username: ${{ secrets.SSH_USERNAME }}
+          envs: PROJECT_NAME,CI_ENVIRONMENT,APP_BASEURL,URL_CRM,URL_MEETING,URL_DROPPOINT,URL_PROJECTCOIN,URL_JOBHUNTING,URL_LINKEDIN,URL_CAKE
+          # 執行部屬的指令
+          script: |
+            cd ~/docker/html/$PROJECT_NAME/
+            echo "目前資料夾:$(pwd)"
+            echo '使用 git pull 更新專案，嘗試快進合併，不行則終止當前合併'
+            git pull origin main --ff-only
+            echo 'composer 安裝套件'
+            composer install --no-progress --prefer-dist --optimize-autoloader --no-dev
+            echo 'generate key'
+            php artisan key:generate
+            echo 're-cache route and config'
+            php artisan route:cache
+            php artisan config:cache
+            echo 'migrate database'
+            php artisan migrate
+            echo 'npm 安裝套件'
+            npm install
+            echo 'compile vite'
+            npm run build
+            echo '建立.env'
+            cat <<EOF > ~/docker/html/$PROJECT_NAME/.env
+            # start of envfile
+            APP_NAME=$APP_NAME
+            APP_ENV=$APP_ENV
+            APP_KEY=$APP_KEY
+            APP_DEBUG=$APP_DEBUG
+            APP_TIMEZONE=$APP_TIMEZONE
+            APP_URL=$APP_URL
+            APP_AES_KEY=$APP_AES_KEY
+            DB_CONNECTION=$DB_CONNECTION
+            DB_HOST=$DB_HOST
+            DB_PORT=$DB_PORT
+            DB_DATABASE=$DB_DATABASE
+            DB_USERNAME=$DB_USERNAME
+            DB_PASSWORD=$DB_PASSWORD
+            SESSION_DRIVER=$SESSION_DRIVER
+            SESSION_LIFETIME=$SESSION_LIFETIME
+            SESSION_ENCRYPT=$SESSION_ENCRYPT
+            SESSION_PATH=$SESSION_PATH
+            SESSION_DOMAIN=$SESSION_DOMAIN
+            VITE_APP_NAME=$VITE_APP_NAME
+            # end of envfile
+            EOF
+
+
+      - name: aws 移除 ip 白名單
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id $AWS_INSTANCE_SG_ID \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
