@@ -1,0 +1,37 @@
+.sidebar-close > .wrapper > aside {
+    margin-left: -18rem;
+}
+
+.sidebar-close > .wrapper > .content-wrapper, .sidebar-close > .wrapper > footer, .sidebar-close > .wrapper > nav, .sidebar-close > .wrapper > .content-wrapper {
+    margin-left: 0;
+}
+
+.sidebar-expend {
+    & > .wrapper > aside {
+        margin-left: 0;
+    }
+}
+
+.sidebar-unexpended {
+    & > .wrapper > aside {
+        margin-left: -18rem;
+    }
+    & > .wrapper > footer, .wrapper > nav, .wrapper > .content-wrapper {
+        margin-left: 0;
+    }
+}
+
+aside {
+    z-index: 1038;
+}
+
+.sidebar-overlay {
+    background-color: rgba(0, 0, 0, .1);
+    bottom: 0;
+    display: none;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 1037;
+}

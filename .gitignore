@@ -1,0 +1,12 @@
+/vendor
+.env
+.DS_Store
+.idea/*
+.php-cs-fixer.cache
+/coverage-report
+.phpunit.result.cache
+.env.testing
+coverage.xml
+.vscode
+/storage/api-docs/api-docs.json
+_modules/*
