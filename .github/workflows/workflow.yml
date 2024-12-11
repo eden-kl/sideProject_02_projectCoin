@@ -187,9 +187,6 @@ jobs:
             echo 'clear route and config'
             php artisan route:clear
             php artisan config:clear
-            echo 're-cache route and config'
-            php artisan route:cache
-            php artisan config:cache
             echo '類映射優化'
             php artisan optimize
 
