@@ -180,16 +180,15 @@ jobs:
             VITE_APP_NAME="${APP_NAME}"
             # end of envfile
             EOF
-            echo 'generate key'
-            php artisan key:generate
-            y
+            echo 'clear config'
+            php artisan config:clear
             echo 're-cache route and config'
             php artisan route:cache
             php artisan config:cache
+            echo 'generate key'
+            php artisan key:generate
             echo 'migrate database'
             php artisan migrate
-            y
-
 
       - name: aws 移除 ip 白名單
         run: |
