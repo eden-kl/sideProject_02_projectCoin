@@ -38,6 +38,14 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
 
+    - name: npm dependencies
+      run: |
+        npm install
+        npm run build
+
+    - name: Generate key
+      run: php artisan key:generate
+
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
