@@ -191,7 +191,7 @@ jobs:
             php artisan route:cache
             php artisan config:cache
             echo '類映射優化'
-            php artisan optimize --force
+            php artisan optimize
 
       - name: aws 移除 ip 白名單
         run: |
